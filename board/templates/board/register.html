@@ -1,0 +1,11 @@
+{% extends 'board/base.html' %}
+{% block content %}
+<div class="w3-container w3-white w3-card w3-round w3-margin">
+  <h2 class="w3-padding">Join the Celebration</h2>
+  <form method="POST" enctype="multipart/form-data" class="w3-padding">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="w3-button w3-pink w3-margin-top w3-margin-bottom">Create Account</button>
+  </form>
+</div>
+{% endblock %}

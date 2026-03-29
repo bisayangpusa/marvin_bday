@@ -1,0 +1,164 @@
+{% extends 'board/base.html' %}
+{% load static %} 
+
+{% block content %}
+
+{% if not user.is_authenticated %}
+<div class="w3-container w3-animate-top">
+    <div class="w3-panel w3-pale-red w3-leftbar w3-border-pink w3-round-large w3-padding-16">
+        <h3 class="w3-text-pink"><b>Join Marvin's Celebration! 🎂</b></h3>
+        <p>You're currently in <b>Guest Mode</b>. You can see all the lovely messages, but you'll need an account to leave your own wish or leave a heart.</p>
+        <p>
+            <a href="{% url 'register' %}" class="w3-button w3-pink w3-round">Sign Up Now</a>
+            <a href="{% url 'login' %}" class="w3-button w3-white w3-border w3-border-pink w3-round">Login</a>
+        </p>
+    </div>
+</div>
+{% endif %}
+
+{% if user.is_authenticated %}
+    <div class="w3-container w3-margin">
+        <a href="{% url 'create_post' %}" class="w3-button w3-pink w3-block w3-round-large w3-large">
+            + Add a Birthday Wish
+        </a>
+    </div>
+{% endif %}
+
+{% for post in posts %}
+    <div id="post-{{ post.pk }}" class="w3-container w3-white w3-card w3-round w3-margin">
+        
+        {% if post.media %}
+            <div class="w3-padding">
+                {% if post.media.url|lower|slice:"-4:" == ".mp4" %}
+                    <video width="100%" controls>
+                        <source src="{{ post.media.url }}" type="video/mp4">
+                    </video>
+                {% else %}
+                    <img src="{{ post.media.url }}" style="width:100%" class="w3-round w3-margin-bottom">
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        <div class="w3-container w3-padding">
+            <img src="{{ post.author.profile.profile_pic_url }}" 
+                 class="w3-circle w3-margin-right" 
+                 style="width:40px; height:40px; object-fit: cover;">
+            <span class="w3-large"><b>{{ post.author.username }}</b></span>
+            <span class="w3-right w3-opacity">{{ post.created_at|timesince }} ago</span>
+        </div>
+        <hr style="margin: 0 16px;">
+        
+        <h1>{{ post.text }}</h1>
+        
+        <div class="w3-padding">
+            {% if user.is_authenticated %}
+                <form action="{% url 'like_post' post.pk %}" method="POST" style="display: inline-block;">
+                    {% csrf_token %}
+                    <input type="hidden" name="scroll_pos" id="scroll_input_{{ post.pk }}" value="0">
+                    
+                    <button type="submit" 
+                            class="w3-button w3-hover-none w3-transparent" 
+                            style="padding:0"
+                            onclick="document.getElementById('scroll_input_{{ post.pk }}').value = window.scrollY;">
+                        
+                        {% if user in post.likes.all %}
+                            <img src="{% static 'images/heart-filled.png' %}" alt="Liked" style="width:30px;">
+                        {% else %}
+                            <img src="{% static 'images/heart-outline.png' %}" alt="Like" style="width:30px;">
+                        {% endif %}
+                        <span class="w3-medium w3-text-grey">{{ post.total_likes }}</span>
+                    </button>
+                </form>
+
+                <button onclick="toggleComments('comments-{{ post.pk }}')" class="w3-button w3-small w3-text-grey w3-hover-none">
+                    💬 {{ post.comments.count }} Comments
+                </button>
+
+                <div id="comments-{{ post.pk }}" class="w3-hide w3-container w3-light-grey w3-round w3-margin-bottom w3-margin-top">
+                    
+                    {% for comment in post.comments.all %}
+                        <div class="w3-padding-small w3-border-bottom w3-border-white" style="display: flex; align-items: flex-start; margin-top: 8px; margin-bottom: 8px;">
+                            <img src="{{ comment.author.profile.profile_pic_url }}" 
+                                 class="w3-circle w3-margin-right" 
+                                 style="width: 30px; height: 30px; object-fit: cover; flex-shrink: 0;">
+                            <div>
+                                <span class="w3-text-pink"><b>{{ comment.author.username }}</b></span>: 
+                                <span class="w3-small">{{ comment.text }}</span>
+                                <div class="w3-tiny w3-opacity">{{ comment.created_at|timesince }} ago</div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="w3-small w3-padding w3-opacity">No comments yet.</p>
+                    {% endfor %}
+
+                    <form action="{% url 'add_comment' post.pk %}" method="POST" class="w3-padding-bottom w3-margin-top">
+                        {% csrf_token %}
+                        <input type="hidden" name="scroll_pos" id="comment_scroll_{{ post.pk }}" value="0">
+                        {{ comment_form.text }}
+                        <button type="submit" 
+                                class="w3-button w3-pink w3-round w3-small w3-margin-top"
+                                onclick="document.getElementById('comment_scroll_{{ post.pk }}').value = window.scrollY;">
+                            Post
+                        </button>
+                    </form>
+                </div>
+
+            {% else %}
+                <a href="{% url 'login' %}" class="w3-button w3-hover-none w3-transparent" style="padding:0">
+                    <img src="{% static 'images/heart-outline.png' %}" alt="Like" style="width:30px;">
+                    <span class="w3-medium w3-text-grey">{{ post.total_likes }}</span>
+                </a>
+                
+                <button onclick="toggleComments('comments-{{ post.pk }}')" class="w3-button w3-small w3-text-grey w3-hover-none">
+                    💬 {{ post.comments.count }} Comments
+                </button>
+
+                <div id="comments-{{ post.pk }}" class="w3-hide w3-container w3-light-grey w3-round w3-margin-bottom w3-margin-top">
+                    {% for comment in post.comments.all %}
+                        <div class="w3-padding-small w3-border-bottom w3-border-white" style="display: flex; align-items: flex-start; margin-top: 8px; margin-bottom: 8px;">
+                            <img src="{{ comment.author.profile.profile_pic_url }}" 
+                                 class="w3-circle w3-margin-right" 
+                                 style="width: 30px; height: 30px; object-fit: cover; flex-shrink: 0;">
+                            <div>
+                                <span class="w3-text-pink"><b>{{ comment.author.username }}</b></span> 
+                                <span class="w3-small">{{ comment.text }}</span>
+                                <div class="w3-tiny w3-opacity" style="margin-top: 2px;">{{ comment.created_at|timesince }} ago</div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="w3-small w3-padding w3-opacity">No comments yet.</p>
+                    {% endfor %}
+                    <p class="w3-small w3-text-pink"><i>Please log in to leave a comment.</i></p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endfor %}
+
+<script>
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const scrollPos = urlParams.get('scroll');
+
+        if (scrollPos) {
+            window.scrollTo({
+                top: parseInt(scrollPos),
+                behavior: 'instant' 
+            });
+
+            const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+        }
+    };
+
+    function toggleComments(id) {
+        var x = document.getElementById(id);
+        if (x.className.indexOf("w3-show") == -1) {
+            x.className += " w3-show";
+        } else {
+            x.className = x.className.replace(" w3-show", "");
+        }
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'board/base.html' %}
+{% block content %}
+<div class="w3-display-container" style="height:400px;">
+  <div class="w3-display-middle w3-card-4 w3-white w3-padding-large w3-round" style="width:100%; max-width:400px;">
+    <h2 class="w3-center">Login</h2>
+    <form method="POST">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="w3-button w3-block w3-pink w3-section">Let's Party</button>
+    </form>
+    <p class="w3-center">New here? <a href="{% url 'register' %}">Sign up!</a></p>
+  </div>
+</div>
+{% endblock %}
